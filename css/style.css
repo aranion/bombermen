@@ -121,6 +121,12 @@
     background-size: 100%;
     background-repeat: no-repeat;
 }
+.playing_field_row .selectDivMonsterSpeed {
+    background-image: url('../img/bag.png');
+    background-size: 100%;
+    background-repeat: no-repeat;
+}
+
 .playing_field_row .addExplosion{
     background-image: url('../img/addExplosion.jpg');
     background-size: 100%;

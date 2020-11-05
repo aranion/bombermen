@@ -16,14 +16,14 @@ class Game {
   #gameElement = { 
     player:       [ 1, { lifePlayer: 3 } ],
     bomb:         [ 0, { explosionTime: 3000, maxBomb: 2, maxExplosion: 3 } ],
-    wall:         [ 0 ],
-    box:          [ 0, { destroyedBox: 0 } ],
+    wall:         [ 3 ],
+    box:          [ 4, { destroyedBox: 0 } ],
     monster:      [ 1, { destroyedMonster: 0 } ]
   };
   #boxUpgrade = {
-    addExplosion:   [ 0, {} ],
+    addExplosion:   [ 1, {} ],
     addBomb:        [ 0, {} ], 
-    addLifePlayer:  [ 0, {} ]
+    addLifePlayer:  [ 1, {} ]
   };
   constructor( idGameZone, idControlPanel, idButtonPlay, idControlLevel ) {
     this.#idRenderGameZone.idGameZone = idGameZone;
@@ -35,16 +35,18 @@ class Game {
     return this.#allStep;
   }
   get hereStayBomb() {
-    // const temp = [];
-    // for (const key in this.#allStep) {
-    //   if ( this.#allStep.hasOwnProperty(key) 
-    //        && 
-    //        key.substr(0,4) == 'bomb' ) {
-    //     temp.push( key , this.#allStep[key][1] )
-    //   }
+    const temp = [];
+    for (const key in this.#allStep) {
+      if ( this.#allStep.hasOwnProperty(key) 
+           && 
+           key.substr(0,4) == 'bomb' ) {
+        temp.push( [ key , this.#allStep[key][1] ] )
+      }
+    }
+    return temp;
+    // if ( this.#allStep['bomb'] !== undefined ) {
+    //     return this.#allStep['bomb'][1];
     // }
-    // return temp;
-    return this.#allStep['bomb'][1];
   }
   get hereStayPlayer() {
     return this.#allStep['player'][1];
@@ -158,6 +160,9 @@ class Game {
   }
   #beginStepGameElement( whoStay, maxElement ) {    // расстановка элементов на игровом поле и отрисовка
     for (let i = 1; i <= maxElement; i++) {
+      if ( whoStay.substr(0,4) == 'bomb') {
+        continue;
+      }
       let whoStayTemp = whoStay;                    // для сброса счетчика последовательности 
       whoStayTemp !== 'player' ? whoStayTemp += i : whoStay;
       this.#rememberStep(
@@ -352,7 +357,7 @@ class Game {
     const maxX = this.#valueGameZone.valueInputMaxX;
     const maxY = this.#valueGameZone.valueInputMaxY;
 
-    this.#resetData(restart);                              // обнуление данных 
+    this.#resetData(restart);                       // обнуление данных 
     this.#calcGameLevel();
     this.#calcMaxGameElement( maxX, maxY );         // выполнить подсчет количества элементов на игровом поле
     
@@ -388,13 +393,20 @@ class Game {
   } 
   renderMoveGameElement( infoRenderElements ) {     // отрисовать движение элментов по полю
     if ( infoRenderElements !== undefined ) { 
-      const [ nextStepElement, hereStayElement, whoStep ] = infoRenderElements;
-      
+      const [ nextStepElement, hereStayElement, , nameBomb ] = infoRenderElements;
+      let [ , , whoStep] = infoRenderElements;
+
       if ( whoStep !== 'explosion' ) {              // если это не взрыв - отрисовываем элемент
-        if ( whoStep !== 'bomb' || ( whoStep == 'bomb' && this.#gameElement.bomb[0] < this.#gameElement.bomb[1].maxBomb ) ) { // если это любой элемент кроме бомбы или бомба, но с доступным количеством бомб
-          if ( whoStep == 'bomb' ) {                // если бомба, снижаем количетво доступных бомб
+        if ( whoStep.substr(0,4) !== 'bomb' 
+             || ( whoStep.substr(0,4) == 'bomb' 
+                  && this.#gameElement.bomb[0] 
+                  < this.#gameElement.bomb[1].maxBomb ) ) { // если это любой элемент кроме бомбы или бомба, но с доступным количеством бомб
+          if ( whoStep.substr(0,4) == 'bomb' ) {                // если бомба, снижаем количетво доступных бомб
             this.#valueBomb( +1 );
+            whoStep = whoStep + this.#gameElement.bomb[0]; 
+            console.log(whoStep);
           }
+          
 
           this.#rememberStep(                       // запомнить новые координаты элемента 
             this.#contorlMoveRender( hereStayElement, nextStepElement, whoStep ), // передаст координаты элемента в 'rememberStep' после проверки 'contorlMoveRender'
@@ -410,10 +422,10 @@ class Game {
         for ( let i = 0; i < nextStepElement.length; i++ ) { // перебор элементов взрыва, запоминание, отрисовка
           for ( let j = 0; j < nextStepElement[i].length; j++ ) {
             // let oldStep = ( j == 0 ) ? explosion[i][0] : explosion[i][j - 1];
-            let explosionType = `${whoStep + i + j}`; 
+            let explosionType = `${whoStep + i + j + nameBomb}`; 
             let nextStepExplosion = nextStepElement[i][j];
             
-            if( this.#controlDestruction( nextStepExplosion ) ) { // контроль за взаимодействием с объектами
+            if( this.#controlDestruction( nextStepExplosion, nameBomb) ) { // контроль за взаимодействием с объектами
               break;                                // если правда, то пропускаем - объект не разрушим
             } else {                                // иначе запоминаем взрыв и объект уничтожается(смена стиля)
               this.#rememberStep(
@@ -430,10 +442,6 @@ class Game {
       } 
       this.#controlPanel();
     }
-    // if ( this.#itGameOverOrWin ) { // если игра выйграна или проиграна не запускаем ничего проверкк chekGameOverAndWin
-    //    return;
-    // }
-    // return this.#chekGameOverAndWin();
   }
   nextLevel() { 
     if ( this.#gameLevel < 20 )  {                   // следующий уровень, то изменить игровое поле и сохранить данные об игроке
@@ -570,7 +578,6 @@ class Game {
             break;
           }
           
-
           isTrue = false;                            // клетка занята
           break;
         } else {
@@ -583,7 +590,7 @@ class Game {
     }
   }
   #contorlMoveRender( stayHere, nextStep, whoStep ) { // проверка ограничения движения игровым полем
-    if(  whoStep == 'bomb'                          // если бомба, то возвращаем stayHere без дальнейшей проверки
+    if(  whoStep.substr(0,4) == 'bomb'                // если бомба, то возвращаем stayHere без дальнейшей проверки
       || nextStep.x < this.#valueGameZone.valueInputMin // для всех остальных элементов идет стандартная проверка
       || nextStep.y < this.#valueGameZone.valueInputMin 
       || nextStep.x > this.#valueGameZone.valueInputMaxX 
@@ -596,21 +603,32 @@ class Game {
       return nextStep;
     }
   }
-  #controlStyle( whoStep ) {                          // проверка, одинаковые ли координты нового места и старого в allStep
-    if( this.#allStep[whoStep] !== undefined 
+  #controlStyle( whoStep ) {                           // проверка, одинаковые ли координты нового места и старого в allStep
+    if( 
+        this.#allStep[whoStep] !== undefined 
         &&
         ( this.#allStep[whoStep][0].x == this.#allStep[whoStep][1].x
           && 
           this.#allStep[whoStep][0].y == this.#allStep[whoStep][1].y ) 
         || 
-        ( this.#allStep['bomb'] !== undefined
+        ( whoStep == 'player' &&
+          this.#allStep['bomb1'] !== undefined
           && 
-          this.#allStep['bomb'][1] !== undefined // если бомаба не определена
+          this.#allStep['bomb1'][1] !== undefined // если бомаба не определена
           &&
-          this.#allStep['bomb'][1].x == this.#allStep[whoStep][0].x // положение бомбы совподает с предыдущим шагом игрока
+          this.#allStep['bomb1'][1].x == this.#allStep[whoStep][0].x // положение бомбы совподает с предыдущим шагом игрока
           && 
-          this.#allStep['bomb'][1].y == this.#allStep[whoStep][0].y
-      ) ) {
+          this.#allStep['bomb1'][1].y == this.#allStep[whoStep][0].y
+      )|| // КОСТЫЛЬ!!!!!!!!!!!! ИСПРАВИТЬ!
+      ( whoStep == 'player' &&
+        this.#allStep['bomb2'] !== undefined
+        && 
+        this.#allStep['bomb2'][1] !== undefined // если бомаба не определена
+        &&
+        this.#allStep['bomb2'][1].x == this.#allStep[whoStep][0].x // положение бомбы совподает с предыдущим шагом игрока
+        && 
+        this.#allStep['bomb2'][1].y == this.#allStep[whoStep][0].y
+    ) ) {
       return true;
     } else {
       return false;
@@ -628,7 +646,7 @@ class Game {
       return false;
     }
   }
-  #controlDestruction( explosion ) {                  // взаимодействие взрыва и объектов
+  #controlDestruction( explosion, nameBomb ) {                  // взаимодействие взрыва и объектов
     for( const key in this.#allStep ) {               // если это стена
       if ( this.#chekElementsDestruction( explosion, key ) ) { // если на линии взрыва есть игровой элемент
         if( key.substr(0,4) == "wall" ) { // взаимодействие взрыва со стеной
@@ -660,8 +678,8 @@ class Game {
         }  
       }      
     } 
-    this.#deleteStyleElement(this.#allStep['bomb'][1]);  // убрать бомбу после взрыва
-    this.#allStep['bomb'][1] = undefined;           // убрать бомбу с поля
+    this.#deleteStyleElement(this.#allStep[nameBomb][1]);  // убрать бомбу после взрыва
+    this.#allStep[nameBomb][1] = undefined;           // убрать бомбу с поля
     return false;
   }
   #checkUniqueBoxUpgrade( box ) {                   // проверка есть ли уже такой ящик в boxUpgrade 
@@ -691,27 +709,6 @@ class Game {
       this.#nextGamePanel( true );      
     }
   }
-  // #chekGameOverAndWin() {
-  //   if ( this.#controlGameOver() ||  this.#controlWin() ) {
-  //     return this.#itGameOverOrWin = true;
-  //   } else {}
-  //     return this.#itGameOverOrWin = false;     
-  // }
-  // #controlGameOver() {                              // контроль за жизнями игрока
-  //   if( this.#allStep['player'][1] !== undefined    // если пользователь существует и его жизни меньше или равны 0
-  //       &&
-  //       this.#gameElement.player[1].lifePlayer <= 0 ) {
-  //     delete this.#allStep['player'][1];            // удаляем игрока из "БД" игрового поля
-  //     this.#nextGamePanel( false );
-  //     return false;     
-  //   }
-  // }
-  // #controlWin() {
-  //   if (  this.#gameElement.monster[1].destroyedMonster >= this.#gameElement.monster[0] ) {
-  //     this.#nextGamePanel( true );
-  //     return true;        
-  //   } 
-  // }
 }
 class Gamer { 
   #lifePlayer;
@@ -809,8 +806,9 @@ class Bomb {
     }
   }
 
-  infoExplosion( hereStayBomb ) {
-    return [ this.#calcExplosion( hereStayBomb ), hereStayBomb, 'explosion' ]
+  infoExplosion( infoBombStepName ) {
+    const [nameBomb,hereStayBomb] = infoBombStepName;
+    return [ this.#calcExplosion( hereStayBomb ), hereStayBomb, 'explosion', nameBomb ]
   }
 }
 class Monster {
@@ -916,7 +914,7 @@ const idControlLevel = document.getElementById('control_level');
 const newGame = new Game( idGameZone, idControlPanel, idButtonPlay, idControlLevel );
 const newPlayer = new Gamer( 5 );
 const newBomb = new Bomb( 3, 3000 );
-const newMonster = new Monster( 500 );
+const newMonster = new Monster( 750 );
 
 function beginGame() {                                // группа однотипных действий для отрисовки игрового поля
   newGame.valueInput =  { maxX: idMaxX.value, maxY: idMaxY.value };
@@ -961,10 +959,12 @@ onkeydown = () => {
         newPlayer.movePlayer( code, newGame.hereStayPlayer ) ); 
     if( code == 32 ) {                                // при нажатии на пробел запускает отсчет до взрыва
       newBomb.infoBomb = newGame.infoBomb;            // передать актуальную информацию для расчета взрыва
-      setTimeout( () => {
-        newGame.renderMoveGameElement( 
-          newBomb.infoExplosion( newGame.hereStayBomb )  // передает в класс Bomb данные о расположении бомбы и возвращает информацию о взрыве
-        );                                            // отрисовывает взрыв
+      setTimeout( () => {;
+        for (let i = 0; i < newGame.hereStayBomb.length; i++) {
+          newGame.renderMoveGameElement( 
+            newBomb.infoExplosion( newGame.hereStayBomb[i] )  // передает в класс Bomb данные о расположении бомбы и возвращает информацию о взрыве
+          );                                            // отрисовывает взрыв
+        }   
       }, newGame.infoBomb.explosionTime);             // время взрыва
     }
   }
