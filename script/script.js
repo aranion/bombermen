@@ -16,14 +16,14 @@ class Game {
   #gameElement = { 
     player:       [ 1, { lifePlayer: 3 } ],
     bomb:         [ 0, { explosionTime: 3000, maxBomb: 2, maxExplosion: 3 } ],
-    wall:         [ 3 ],
-    box:          [ 4, { destroyedBox: 0 } ],
-    monster:      [ 2, { destroyedMonster: 0 } ]
+    wall:         [ 0 ],
+    box:          [ 0, { destroyedBox: 0 } ],
+    monster:      [ 1, { destroyedMonster: 0 } ]
   };
   #boxUpgrade = {
-    addExplosion:   [ 2, {} ],
+    addExplosion:   [ 0, {} ],
     addBomb:        [ 0, {} ], 
-    addLifePlayer:  [ 1, {} ]
+    addLifePlayer:  [ 0, {} ]
   };
   constructor( idGameZone, idControlPanel, idButtonPlay, idControlLevel ) {
     this.#idRenderGameZone.idGameZone = idGameZone;
@@ -35,6 +35,15 @@ class Game {
     return this.#allStep;
   }
   get hereStayBomb() {
+    // const temp = [];
+    // for (const key in this.#allStep) {
+    //   if ( this.#allStep.hasOwnProperty(key) 
+    //        && 
+    //        key.substr(0,4) == 'bomb' ) {
+    //     temp.push( key , this.#allStep[key][1] )
+    //   }
+    // }
+    // return temp;
     return this.#allStep['bomb'][1];
   }
   get hereStayPlayer() {
@@ -93,7 +102,7 @@ class Game {
       this.#allStep[whoStep][0] = {...this.#allStep[whoStep][1]};
       this.#allStep[whoStep][1] = newStep;
     } 
-    if(whoStep === 'bomb') {
+    if( whoStep.substr(0,4) == 'bomb' ) {
       this.#allStep[whoStep][0] =  this.#allStep[whoStep][1];
       this.#allStep[whoStep][1] = newStep;
     }
@@ -134,14 +143,18 @@ class Game {
       return randomBox;
     }
   }
-  #resetData() {                                    // сбросс данных
+  #resetData( restart ) {                                    // сбросс данных
     this.#allStep = {};                             // очистка allStep, в связи с изменением размера игрового поля
-    this.#gameElement.bomb[1] = { explosionTime: 3000, maxBomb: 1, maxExplosion: 3 };
-    this.#gameElement.player[1] = { lifePlayer: 3 };
+    if (restart) {
+      this.#gameElement.bomb[1] = { explosionTime: 3000, maxBomb: 1, maxExplosion: 3 };
+      this.#gameElement.player[1] = { lifePlayer: 3 };
+    }
     this.#itGameOverOrWin = false;
     this.#gameElement.monster[1].destroyedMonster = 0; // сброс количествоубитых монстров
     this.#gameElement.box[1].destroyedBox = 0;        // сброс количество разрушенных ящиков
-    this.#idRenderGameZone.idControlPanel.style.visibility = 'hidden'; 
+    // this.#idRenderGameZone.idControlPanel.style.visibility = 'hidden'; 
+    // this.#idRenderGameZone.idControlLevel.style.display = 'none';
+    // this.#idRenderGameZone.idButtonPlay.style.visibility = 'hidden';
   }
   #beginStepGameElement( whoStay, maxElement ) {    // расстановка элементов на игровом поле и отрисовка
     for (let i = 1; i <= maxElement; i++) {
@@ -220,7 +233,7 @@ class Game {
        <div> Монстров:<b> ${this.#gameElement.monster[1].destroyedMonster + ' из ' + this.#gameElement.monster[0]} </b></div>
        <div> Ящиков:<b> ${this.#gameElement.box[1].destroyedBox + ' из ' + this.#gameElement.box[0]} </b></div>
        `; 
-    this.#idRenderGameZone.idControlPanel.style.visibility = 'visible';  
+    // this.#idRenderGameZone.idControlPanel.style.visibility = 'visible';  
   }
   #nextGamePanel( itWinOrOver ) { 
     // this.#idRenderGameZone.idControlLevel.style.display = 'block';
@@ -232,7 +245,8 @@ class Game {
     } else {
       this.#idRenderGameZone.idControlLevel.innerHTML = 
       `<div><h2>Вы проиграли! </h2>`;
-      this.#idRenderGameZone.idButtonPlay.style.visibility = 'visible';
+      // this.#idRenderGameZone.idButtonPlay.style.visibility = 'visible';
+      // this.#idRenderGameZone.idControlLevel.style.display = 'block';
     }
   }
   #takeLifePlayer( value ) {                        // жизни игрока +-
@@ -293,12 +307,12 @@ class Game {
     this.#gameElement.bomb[0] = +this.#gameElement.bomb[0] + value;
     this.#controlPanel();
   }
-  #ifPlayerOnBombNotRender( whoStep ) {             // проверить и отрисовать, если игрок или монстр стоит на бомбе ничего не отрисовывать
+  #ifPlayerOnBombNotRender( whoStep ) {             // проверить и отрисовать, если игрок или монстр стоит на бомбе, пытается сдвинуться и не может -  ничего не отрисовывать
     if( ( whoStep == 'player' || whoStep.substr(0,7) == 'monster' )
         &&
         ( this.#allStep[whoStep][0] === undefined   // если первоночальное значение undefined, то игрок поставил бомбу сразу
           || 
-          ( this.#allStep[whoStep][0].x == this.#allStep[whoStep][1].x    // положение бомбы совподает c игроком
+          ( this.#allStep[whoStep][0].x == this.#allStep[whoStep][1].x    // положение старого и нового шага игрока совподает, не отрисовывать (под игроком может быть бобма которой не нужно менять стиль)
             && 
             this.#allStep[whoStep][0].y == this.#allStep[whoStep][1].y ) ) ) {
       return ;
@@ -307,7 +321,7 @@ class Game {
     }
   }
   #renderMove( whoStep ) {                          // отрисовать движение элемента и изменить стиль если он проходит сквозь взрыв
-    if (this.#allStep.hasOwnProperty( 'bomb') ) {   // если существует элемент 'бомба', если нет, то цикл делать не надо
+    // if (this.#allStep.hasOwnProperty( 'bomb') ) {   // если существует элемент 'бомба', если нет, то цикл делать не надо
       for ( const key in this.#allStep ) {
         if ( key.substr(0,9) === "explosion"        // если следующий шаг идет на взрыв
              && this.#allStep[key][1].x ===  this.#allStep[whoStep][1].x
@@ -326,19 +340,19 @@ class Game {
         }
         this.#deleteStyleElement( this.#allStep[whoStep][0] );         // всегда удаляем стиль прошлого шага
       }
-    } else {                                        // просто отрисовали элемент и удалили стиль на старом месте если нет элемента "бомба"
-      this.#addStyleElement( this.#allStep[whoStep][1], whoStep );     // отрисовать на новой клетке
-      this.#deleteStyleElement( this.#allStep[whoStep][0] );           // и удалить на старой клетке
-    }
+    // } else {                                        // просто отрисовали элемент и удалили стиль на старом месте если нет элемента "бомба"
+      // this.#addStyleElement( this.#allStep[whoStep][1], whoStep );     // отрисовать на новой клетке
+      // this.#deleteStyleElement( this.#allStep[whoStep][0] );           // и удалить на старой клетке
+    // }
   }
   
-  renderGameZone( nextLevel ) {                     // запуск отрисовки игрового поля
+  renderGameZone( restart ) {                     // запуск отрисовки игрового поля
     const tempArr = [];
     const min = this.#valueGameZone.valueInputMin;
     const maxX = this.#valueGameZone.valueInputMaxX;
     const maxY = this.#valueGameZone.valueInputMaxY;
 
-    this.#resetData();                              // обнуление данных 
+    this.#resetData(restart);                              // обнуление данных 
     this.#calcGameLevel();
     this.#calcMaxGameElement( maxX, maxY );         // выполнить подсчет количества элементов на игровом поле
     
@@ -361,9 +375,6 @@ class Game {
        this.#deleteStyleElement( {x:this.#allStep[key][1].x,y:this.#allStep[key][1].y} )
       }
     }
-
-    // this.#idRenderGameZone.idButtonPlay.style.visibility = 'hidden';
-    // this.#idRenderGameZone.idControlLevel.style.display = 'none';
 
     this.#allStep = {};                             // перезапуск игры, обнуление шагов
 
@@ -909,7 +920,7 @@ const newMonster = new Monster( 500 );
 
 function beginGame() {                                // группа однотипных действий для отрисовки игрового поля
   newGame.valueInput =  { maxX: idMaxX.value, maxY: idMaxY.value };
-  newGame.renderGameZone();
+  newGame.renderGameZone(true);                     // ture для сброса игровых данных по игроку
   idButtonPlay.style.visibility = 'visible';
 }
 function addMonster() {
@@ -926,7 +937,7 @@ function addMonster() {
 }
 function nextLevel() {
   newGame.nextLevel();
-  newGame.renderGameZone( true );
+  newGame.renderGameZone();
   newGame.startRenderGameElement(); 
   addMonster();
 }
