@@ -1,11 +1,10 @@
 class Game { 
   #allStep = {};
-  #itGameOverOrWin = false;
   #idRenderGameZone = {
     idGameZone: '',
     idControlPanel: '',
     idButtonPlay: '',
-    idControlLevel
+    idControlLevel: ''
   };
   #valueGameZone = {
     valueInputMaxX: 5,
@@ -15,13 +14,13 @@ class Game {
   #gameLevel = 1;
   #gameElement = { 
     player:       [ 1, { lifePlayer: 3 } ],
-    bomb:         [ 0, { explosionTime: 3000, maxBomb: 2, maxExplosion: 3 } ],
+    bomb:         [ 0, { explosionTime: 3000, maxBomb: 1, maxExplosion: 1 } ],
     wall:         [ 3 ],
     box:          [ 4, { destroyedBox: 0 } ],
     monster:      [ 1, { destroyedMonster: 0 } ]
   };
   #boxUpgrade = {
-    addExplosion:   [ 1, {} ],
+    addExplosion:   [ 0, {} ],
     addBomb:        [ 0, {} ], 
     addLifePlayer:  [ 1, {} ]
   };
@@ -43,15 +42,12 @@ class Game {
         temp.push( [ key , this.#allStep[key][1] ] )
       }
     }
-    return temp;
-    // if ( this.#allStep['bomb'] !== undefined ) {
-    //     return this.#allStep['bomb'][1];
-    // }
+    return temp;s
   }
   get hereStayPlayer() {
     return this.#allStep['player'][1];
   }
-  get hereStayMonsters() {                          // возвращает массив с тем где стоит какой монстр
+  get hereStayMonsters() {                          // возвращает массив монстров
     const temp = [];
     for (const key in this.#allStep) {
       if( key.substr(0,7) == "monster" ) {
@@ -64,7 +60,9 @@ class Game {
     return this.#gameElement;
   }
   get valueInput() {
-    return { maxX: this.#valueGameZone.valueInputMaxX, maxY: this.#valueGameZone.valueInputMaxY, min: this.#valueGameZone.valueInputMin };
+    return { maxX: this.#valueGameZone.valueInputMaxX, 
+             maxY: this.#valueGameZone.valueInputMaxY, 
+             min: this.#valueGameZone.valueInputMin };
   }
   set valueInput( newValue ) { 
     if ( newValue === undefined ) {
@@ -100,7 +98,7 @@ class Game {
          this.#allStep[whoStep][1] === undefined ) { // добавить координаты элемента при старте
       this.#allStep[whoStep].push( undefined );
       this.#allStep[whoStep].push( newStep );
-    } else if (this.#allStep[whoStep].length >= 1) { // значение на новом месте переносятся на старое и в новое записываются новые данные  
+    } else if (this.#allStep[whoStep].length >= 1) { // значения на новом месте переносятся на старое, а в новое записываются новые данные  
       this.#allStep[whoStep][0] = {...this.#allStep[whoStep][1]};
       this.#allStep[whoStep][1] = newStep;
     } 
@@ -138,25 +136,22 @@ class Game {
     }
   }
   #returnRandomBox() {                              // вернуть случайный ящик
-    const randomBox = `box${Math.floor( Math.random() * ( this.#gameElement.box[0]) - 1 + 1) + 1}`
+    const randomBox = 
+      `box${Math.floor( Math.random() * this.#gameElement.box[0]) + 1}`
     if ( this.#checkUniqueBoxUpgrade( randomBox )[0] ) {
       return this.#returnRandomBox();
     } else {
       return randomBox;
     }
   }
-  #resetData( restart ) {                                    // сбросс данных
+  #resetData( restart ) {                           // очистка данных
     this.#allStep = {};                             // очистка allStep, в связи с изменением размера игрового поля
-    if (restart) {
+    if (restart) {                                  // если это не следующий уровень
       this.#gameElement.bomb[1] = { explosionTime: 3000, maxBomb: 1, maxExplosion: 3 };
       this.#gameElement.player[1] = { lifePlayer: 3 };
     }
-    this.#itGameOverOrWin = false;
     this.#gameElement.monster[1].destroyedMonster = 0; // сброс количествоубитых монстров
     this.#gameElement.box[1].destroyedBox = 0;        // сброс количество разрушенных ящиков
-    // this.#idRenderGameZone.idControlPanel.style.visibility = 'hidden'; 
-    // this.#idRenderGameZone.idControlLevel.style.display = 'none';
-    // this.#idRenderGameZone.idButtonPlay.style.visibility = 'hidden';
   }
   #beginStepGameElement( whoStay, maxElement ) {    // расстановка элементов на игровом поле и отрисовка
     for (let i = 1; i <= maxElement; i++) {
@@ -166,18 +161,18 @@ class Game {
       let whoStayTemp = whoStay;                    // для сброса счетчика последовательности 
       whoStayTemp !== 'player' ? whoStayTemp += i : whoStay;
       this.#rememberStep(
-        this.#returnRandomNewStep(),                //случайное появление
+        this.#returnRandomNewStep(),                // случайное появление
         whoStayTemp );
       this.#addStyleElement( this.#allStep[whoStayTemp][1], whoStayTemp ); // присвоение класса для отрисовки
     }
   }
   #calcMaxGameElement( maxX, maxY ) {               // расчет максимального количества элементов на игровом поле
+    this.#boxUpgrade.addExplosion[0] = Math.floor( this.#gameLevel * 0.2 );
+    this.#boxUpgrade.addBomb[0] = Math.floor( this.#gameLevel / 20);
+    this.#boxUpgrade.addLifePlayer[0] = Math.floor( this.#gameLevel * 0.25 );
     this.#gameElement.wall[0] = Math.floor( ( maxX * maxY ) / 10 );
     this.#gameElement.box[0] = Math.floor( ( maxX * maxY ) / 5 );
-    this.#gameElement.monster[0] = Math.floor( ( maxX * maxY ) / 14 );
-    this.#boxUpgrade.addExplosion[0] = Math.floor( ( maxX * maxY ) / 60 );
-    this.#boxUpgrade.addBomb [0] = Math.floor( ( maxX * maxY ) / 70 );
-    this.#boxUpgrade.addLifePlayer[0] = Math.floor( ( maxX * maxY ) / 50 );
+    this.#gameElement.monster[0] = Math.floor( ( maxX * maxY ) / 12 );
   }
   #calcGameLevel() {
     this.#gameLevel = +this.#valueGameZone.valueInputMaxX 
@@ -215,9 +210,11 @@ class Game {
     }
   }
   #toApplyClass( stepElement, className ) {         // найти нужный элемент для присвоения класса
-    const rowNumber = stepElement.x - 1;            // в массиве отсчет начинается с 0 
-    const row = stepElement.y - 1;                  // в массиве отсчет начинается с 0
-    this.#idRenderGameZone.idGameZone.children[row].children[rowNumber].className = className;
+    if (Object.keys(stepElement).length !== 0 ) {
+      const rowNumber = stepElement.x - 1;            // в массиве отсчет начинается с 0 
+      const row = stepElement.y - 1;                  // в массиве отсчет начинается с 0
+      this.#idRenderGameZone.idGameZone.children[row].children[rowNumber].className = className;
+    }
   }
   #clearExplosion() {                               // удалить все после взрыва
     for (const key in this.#allStep) {
@@ -238,20 +235,22 @@ class Game {
        <div> Монстров:<b> ${this.#gameElement.monster[1].destroyedMonster + ' из ' + this.#gameElement.monster[0]} </b></div>
        <div> Ящиков:<b> ${this.#gameElement.box[1].destroyedBox + ' из ' + this.#gameElement.box[0]} </b></div>
        `; 
-    // this.#idRenderGameZone.idControlPanel.style.visibility = 'visible';  
   }
   #nextGamePanel( itWinOrOver ) { 
-    // this.#idRenderGameZone.idControlLevel.style.display = 'block';
+    this.#idRenderGameZone.idControlLevel.style.display = 'block';
     if ( itWinOrOver ) {
       this.#idRenderGameZone.idControlLevel.innerHTML = 
-      `<div><h2>Вы выиграли ${this.#gameLevel} уровень! </h2>
-       <input type="button" id="nextLevel" onclick="nextLevel();" value="Следующий уровень ${this.#gameLevel + 1}"> </div>
+      `<div>
+        <h2>Вы прошли ${this.#gameLevel} уровень! </h2>
+        <input type="button" id="nextLevel" onclick="nextLevel();" value="Следующий уровень ${this.#gameLevel + 1}"> 
+       </div>
       `; 
     } else {
       this.#idRenderGameZone.idControlLevel.innerHTML = 
-      `<div><h2>Вы проиграли! </h2>`;
-      // this.#idRenderGameZone.idButtonPlay.style.visibility = 'visible';
-      // this.#idRenderGameZone.idControlLevel.style.display = 'block';
+      `<div>
+        <h2>Вы проиграли!</h2>
+      </div>`;
+      this.#idRenderGameZone.idButtonPlay.style.display = 'block';
     }
   }
   #takeLifePlayer( value ) {                        // жизни игрока +-
@@ -266,14 +265,10 @@ class Game {
   #addUpgrade( upgrade ) {
     switch (upgrade) {
       case 'explosion':
-        this.#gameElement.bomb[1].lengthExplosion += 1;
+        this.#valueExplosion( +1 );
         break;
       case 'explosionNegative':
-        if ( this.#gameElement.bomb[1].lengthExplosion <= 1 ) {
-          this.#gameElement.bomb[1].lengthExplosion = 1;
-        } else {
-          this.#gameElement.bomb[1].lengthExplosion -= 1;
-        }
+        this.#valueExplosion( -1 );
         break;
       case 'addBomb':
         this.#valueMaxBomb( +1 );
@@ -291,18 +286,28 @@ class Game {
         break;
     }    
   } 
+  #valueExplosion( value ) {
+    if (value < 0 &&  ( (+this.#gameElement.bomb[1].lengthExplosion + value) <= 1 ) ) {
+      this.#gameElement.bomb[1].lengthExplosion = 1;
+    } else {
+      this.#gameElement.bomb[1].lengthExplosion = +this.#gameElement.bomb[1].lengthExplosion + value;
+    }
+  }
   #valueMonster() {                                 // уничтожить одного монстра
-    this.#gameElement.monster[1].destroyedMonster = this.#gameElement.monster[1].destroyedMonster + 1;
+    this.#gameElement.monster[1].destroyedMonster = 
+      +this.#gameElement.monster[1].destroyedMonster + 1;
     this.#controlPanel();
     this.#chekWin();
   }
   #valueBox() {                                     // уничтожить один ящик
-    this.#gameElement.box[1].destroyedBox = this.#gameElement.box[1].destroyedBox + 1;
+    this.#gameElement.box[1].destroyedBox = +this.#gameElement.box[1].destroyedBox + 1;
     this.#controlPanel();
   }
   #valueMaxBomb( value ) {
-    if ( ( value < 0 ) && ( +this.#gameElement.bomb[1].lengthExplosion - value ) < 1 ) {
+    if ( ( value < 0 ) && ( +this.#gameElement.bomb[1].lengthExplosion + value ) < 1 ) {
       this.#gameElement.bomb[1].maxBomb = 1;
+    } else if ( ( value > 0 ) && ( +this.#gameElement.bomb[1].lengthExplosion + value ) >= 3 ) {
+      this.#gameElement.bomb[1].maxBomb = 3;
     } else {
       this.#gameElement.bomb[1].maxBomb = +this.#gameElement.bomb[1].maxBomb + value;
     }
@@ -326,13 +331,12 @@ class Game {
     }
   }
   #renderMove( whoStep ) {                          // отрисовать движение элемента и изменить стиль если он проходит сквозь взрыв
-    // if (this.#allStep.hasOwnProperty( 'bomb') ) {   // если существует элемент 'бомба', если нет, то цикл делать не надо
       for ( const key in this.#allStep ) {
         if ( key.substr(0,9) === "explosion"        // если следующий шаг идет на взрыв
              && this.#allStep[key][1].x ===  this.#allStep[whoStep][1].x
              && this.#allStep[key][1].y ===  this.#allStep[whoStep][1].y  ) {
           delete this.#allStep[key];                // удаляем элемент взрыва 
-          if ( whoStep == 'player') {               // отрисовать пепел игрока
+          if ( whoStep == 'player' ) {               // отрисовать пепел игрока
             this.#addStyleElement( this.#allStep[whoStep][1], 'dead' );
             break; 
           } else if ( whoStep.substr(0,7) == 'monster' ){              // отрисовать пепел монстра
@@ -345,13 +349,9 @@ class Game {
         }
         this.#deleteStyleElement( this.#allStep[whoStep][0] );         // всегда удаляем стиль прошлого шага
       }
-    // } else {                                        // просто отрисовали элемент и удалили стиль на старом месте если нет элемента "бомба"
-      // this.#addStyleElement( this.#allStep[whoStep][1], whoStep );     // отрисовать на новой клетке
-      // this.#deleteStyleElement( this.#allStep[whoStep][0] );           // и удалить на старой клетке
-    // }
   }
   
-  renderGameZone( restart ) {                     // запуск отрисовки игрового поля
+  renderGameZone( restart ) {                       // запуск отрисовки игрового поля
     const tempArr = [];
     const min = this.#valueGameZone.valueInputMin;
     const maxX = this.#valueGameZone.valueInputMaxX;
@@ -388,14 +388,13 @@ class Game {
         this.#beginStepGameElement( key, this.#gameElement[key][0] ); 
       }
     }
-    // this.#controlPanel();
     this.#rememberBoxUpgrade();                     // выбрать ящики и запомнить их, для upgrade игрока после уничтожения ящика
   } 
   renderMoveGameElement( infoRenderElements ) {     // отрисовать движение элментов по полю
     if ( infoRenderElements !== undefined ) { 
       const [ nextStepElement, hereStayElement, , nameBomb ] = infoRenderElements;
       let [ , , whoStep] = infoRenderElements;
-
+    
       if ( whoStep !== 'explosion' ) {              // если это не взрыв - отрисовываем элемент
         if ( whoStep.substr(0,4) !== 'bomb' 
              || ( whoStep.substr(0,4) == 'bomb' 
@@ -405,9 +404,11 @@ class Game {
             this.#valueBomb( +1 );
             whoStep = whoStep + this.#gameElement.bomb[0]; 
             console.log(whoStep);
+          }         
+          if ( whoStep == 'player' // если у игрока нет жизней , он не двигается
+           && this.#gameElement[whoStep][1].lifePlayer <= 0) {
+            return; 
           }
-          
-
           this.#rememberStep(                       // запомнить новые координаты элемента 
             this.#contorlMoveRender( hereStayElement, nextStepElement, whoStep ), // передаст координаты элемента в 'rememberStep' после проверки 'contorlMoveRender'
             whoStep);
@@ -421,7 +422,6 @@ class Game {
       } else if ( nextStepElement !== undefined ) { // если это взрыв и следующий шаг определен
         for ( let i = 0; i < nextStepElement.length; i++ ) { // перебор элементов взрыва, запоминание, отрисовка
           for ( let j = 0; j < nextStepElement[i].length; j++ ) {
-            // let oldStep = ( j == 0 ) ? explosion[i][0] : explosion[i][j - 1];
             let explosionType = `${whoStep + i + j + nameBomb}`; 
             let nextStepExplosion = nextStepElement[i][j];
             
@@ -462,7 +462,10 @@ class Game {
       alert( "Ширина игрового поля не может быть больше 24!");
       return false;
     } else if (maxY > 12 ) {
-      alert( "Высота игрового поля не может быть больше 12!");
+      debugger
+      if ( this.#gameLevel < 26 ) {
+        alert( "Высота игрового поля не может быть больше 12!");
+      }
       return false;
     } else if ( maxY < 5 ) {
       alert( "Высота игрового поля не может быть меньше 5!");
@@ -499,7 +502,7 @@ class Game {
           if ( step[2] == "player"
                &&
                key.substr(0,9) === "explosion" ) {  // на клетке взрыв, идти можно но минус 1 жизнь
-            this.#takeLifePlayer( -1 );                 // минус жизнь, убил взрыв
+            this.#takeLifePlayer( -1 );             // минус жизнь, убил взрыв
             isTrue = true; 
             // console.log('на точке ' + step[0] + 'x' + step[1] + ' ОГОНЬ!');
             break;
@@ -519,8 +522,7 @@ class Game {
           if ( step[2] == "player"                  // если игрок двигается на элемент 'addExplosion'
                && 
                key.substr(0,12)  == "addExplosion") {
-            this.#addUpgrade( 'explosion' );                   // длина взрыва увеличится на 1
-            // this.#allStep[key] = undefined; 
+            this.#addUpgrade( 'explosion' );        // длина взрыва увеличится на 1
             delete this.#allStep[key];
             isTrue = true;                          // двигается дальше
             break;
@@ -541,7 +543,6 @@ class Game {
                && 
                key.substr(0,13)  == "addLifePlayer") {
             this.#addUpgrade( 'lifePlayer' );       // добавить дополнительную жизнь
-            // this.#allStep[key] = undefined; 
             delete this.#allStep[key];
             isTrue = true;                          // двигается дальше
             break;
@@ -614,21 +615,29 @@ class Game {
         ( whoStep == 'player' &&
           this.#allStep['bomb1'] !== undefined
           && 
-          this.#allStep['bomb1'][1] !== undefined // если бомаба не определена
+          this.#allStep['bomb1'][1] !== undefined // если бомаба1 не определена
           &&
           this.#allStep['bomb1'][1].x == this.#allStep[whoStep][0].x // положение бомбы совподает с предыдущим шагом игрока
           && 
-          this.#allStep['bomb1'][1].y == this.#allStep[whoStep][0].y
-      )|| // КОСТЫЛЬ!!!!!!!!!!!! ИСПРАВИТЬ!
-      ( whoStep == 'player' &&
-        this.#allStep['bomb2'] !== undefined
-        && 
-        this.#allStep['bomb2'][1] !== undefined // если бомаба не определена
-        &&
-        this.#allStep['bomb2'][1].x == this.#allStep[whoStep][0].x // положение бомбы совподает с предыдущим шагом игрока
-        && 
-        this.#allStep['bomb2'][1].y == this.#allStep[whoStep][0].y
-    ) ) {
+          this.#allStep['bomb1'][1].y == this.#allStep[whoStep][0].y )
+        || 
+        ( whoStep == 'player' &&
+          this.#allStep['bomb2'] !== undefined
+          && 
+          this.#allStep['bomb2'][1] !== undefined // если бомаба2 не определена
+          &&
+          this.#allStep['bomb2'][1].x == this.#allStep[whoStep][0].x // положение бомбы совподает с предыдущим шагом игрока
+          && 
+          this.#allStep['bomb2'][1].y == this.#allStep[whoStep][0].y )
+        || 
+          ( whoStep == 'player' &&
+            this.#allStep['bomb3'] !== undefined
+            && 
+            this.#allStep['bomb3'][1] !== undefined // если бомаба3 не определена
+            &&
+            this.#allStep['bomb3'][1].x == this.#allStep[whoStep][0].x // положение бомбы совподает с предыдущим шагом игрока
+            && 
+            this.#allStep['bomb3'][1].y == this.#allStep[whoStep][0].y ) ) {
       return true;
     } else {
       return false;
@@ -646,7 +655,7 @@ class Game {
       return false;
     }
   }
-  #controlDestruction( explosion, nameBomb ) {                  // взаимодействие взрыва и объектов
+  #controlDestruction( explosion, nameBomb ) {        // взаимодействие взрыва и объектов
     for( const key in this.#allStep ) {               // если это стена
       if ( this.#chekElementsDestruction( explosion, key ) ) { // если на линии взрыва есть игровой элемент
         if( key.substr(0,4) == "wall" ) { // взаимодействие взрыва со стеной
@@ -717,8 +726,6 @@ class Gamer {
   #leftColumn = 37;
   #rightColumn = 39;
   #bomb = 32;
-  // #speed = 500;
-  // #itStep = true;
   constructor( lifePlayer ) {
     this.#lifePlayer = lifePlayer;
   }
@@ -728,9 +735,6 @@ class Gamer {
 
   movePlayer(keybord, stayHere) {                     // движение игрока в зависимости от кнопок
     let nextStep = {...stayHere};
-    // if ( this.#itStep ) {
-
-    // }
     if( stayHere !== undefined ) {
       switch (keybord) {
         case this.#upRow:
@@ -762,7 +766,7 @@ class Bomb {
   #maxBomb = 1;
   #lengthExplosion;
   #explosionTime;
-  constructor( beginLengthExplosion = 3, explosionTime = 3000) {
+  constructor( beginLengthExplosion = 1, explosionTime = 3000) {
     this.#lengthExplosion = beginLengthExplosion;
     this.#explosionTime = explosionTime;
   }
@@ -813,35 +817,14 @@ class Bomb {
 }
 class Monster {
   #speedMonster;
-  // #objInfoStepsMonsters = {};
-  // #objOldSteps = {};
   constructor ( speedMonster ) {
     this.#speedMonster = speedMonster;
   }
   get speedMonster() {
     return this.#speedMonster;
   }
-  #randomSteps( whichMonster ) { // тут нужно настроить УМ у монстров, для передвижения
-
-    // const hereWasMonster = this.#objInfoStepsMonsters[whichMonster];
-    // const nextStep = this.#objInfoStepsMonsters[whichMonster].nextStep;
-    // const oldDirection = this.#objInfoStepsMonsters[whichMonster][2].direction;
+  #randomSteps( whichMonster ) { 
     const direction =  Math.floor(Math.random() * ( 4 - 1 + 1 ) ) + 1;  
-    // let oldDirection = this.#objInfoStepsMonsters[whichMonster][2];
-    // this.#objOldSteps[whichMonster] = [ nextStep, 1 ];
-
-    // if (  this.#objInfoStepsMonsters[whichMonster][0] !== undefined 
-    //     &&
-    //     this.#objOldSteps[whichMonster] !== undefined 
-    //     &&
-    //     (
-    //     this.#objInfoStepsMonsters[whichMonster][0].x !== this.#objOldSteps[whichMonster][0].x
-    //       ||
-    //     this.#objInfoStepsMonsters[whichMonster][0].y !== this.#objOldSteps[whichMonster][0].y )
-    //       &&
-    //       this.#objOldSteps[whichMonster][1].direction == direction ) {
-    //   return this.#randomSteps( whichMonster );
-    // } else {
       switch ( direction ) {
         case 1:
           return 'up';
@@ -858,7 +841,6 @@ class Monster {
         default:
           break;
       }
-      // }
   }
  
   moveMonster( infoAboutMonster ) {
@@ -869,30 +851,18 @@ class Monster {
         switch ( this.#randomSteps( whichMonster ) ) {
           case 'up':
             nextStep.y = hereStayMonster.y - 1;
-            // this.#objOldSteps[whichMonster] = [ nextStep, 1 ];
-            // console.log(this.#objInfoStepsMonsters[whichMonster]);
-            // console.log( whichMonster + ' перемещается - up' + nextStep.x + 'x' + nextStep.y);
             return [ nextStep, hereStayMonster, whichMonster ];
             break;
           case 'right':
             nextStep.x = hereStayMonster.x + 1;
-            // this.#objOldSteps[whichMonster] = [ nextStep, 2 ];
-            // this.#objInfoStepsMonsters[whichMonster][2] = { nextStep: nextStep, direction: 2 };
-            // console.log( whichMonster + ' перемещается - right ' + nextStep.x + 'x' + nextStep.y);
             return [ nextStep, hereStayMonster, whichMonster ];
             break;
           case 'left':
             nextStep.x = hereStayMonster.x - 1;
-            // this.#objOldSteps[whichMonster] = [ nextStep, 3 ];
-            // this.#objInfoStepsMonsters[whichMonster][2] = { nextStep: nextStep, direction: 3 };
-            // console.log( whichMonster + ' перемещается -  left' + nextStep.x + 'x' + nextStep.y);
             return [ nextStep, hereStayMonster, whichMonster ];
             break;
           case 'down':
             nextStep.y = hereStayMonster.y + 1;
-            // this.#objOldSteps[whichMonster] = [ nextStep, 4 ];
-            // this.#objInfoStepsMonsters[whichMonster][2] = { nextStep: nextStep, direction: 4 };
-            // console.log( whichMonster + ' перемещается - down ' + nextStep.x + 'x' + nextStep.y);
             return [ nextStep, hereStayMonster, whichMonster ];
             break;
           default:
@@ -909,17 +879,16 @@ const idMaxX = document.getElementById("input_axisX");
 const idMaxY = document.getElementById("input_axisY");
 const idButtonPlay = document.getElementById('play');
 const idControlLevel = document.getElementById('control_level');
-// const idButtonReset = document.getElementById('reset'); 
 
 const newGame = new Game( idGameZone, idControlPanel, idButtonPlay, idControlLevel );
-const newPlayer = new Gamer( 5 );
-const newBomb = new Bomb( 3, 3000 );
-const newMonster = new Monster( 750 );
+const newPlayer = new Gamer( 3 );
+const newBomb = new Bomb( 1, 3000 );
+const newMonster = new Monster( 350 );
 
 function beginGame() {                                // группа однотипных действий для отрисовки игрового поля
   newGame.valueInput =  { maxX: idMaxX.value, maxY: idMaxY.value };
-  newGame.renderGameZone(true);                     // ture для сброса игровых данных по игроку
-  idButtonPlay.style.visibility = 'visible';
+  newGame.renderGameZone(true);                       // ture для сброса игровых данных по игроку
+  idButtonPlay.style.display = 'block';
 }
 function addMonster() {
   for (let i = 0; i < newGame.hereStayMonsters.length; i++) { // перебор элементов (монстров)
@@ -933,11 +902,26 @@ function addMonster() {
     }, newMonster.speedMonster);                      // скорость передвижения монстров
   }
 }
+function visibility(key) {
+  switch (key) {
+    case 'none':
+      idButtonPlay.style.display = 'none';
+      idControlLevel.style.display = 'none';
+      break;
+    case 'block':
+      idButtonPlay.style.display = 'block';
+      idControlLevel.style.display = 'block';
+      break;
+    default:
+      break;
+  }
+}
 function nextLevel() {
   newGame.nextLevel();
   newGame.renderGameZone();
   newGame.startRenderGameElement(); 
   addMonster();
+  visibility('none');
 }
 // код отвечающий за взаимодействие на странице с пользователем
 input_axisX.oninput = () => beginGame(); 
@@ -947,9 +931,8 @@ play.onclick = () =>  {
   newGame.infoBomb = newBomb.infoBomb;                // передача информации о количестве,времени и длине бомбы
   newGame.startRenderGameElement(); 
   addMonster();
-  idButtonPlay.style.visibility = 'hidden';
+  visibility('none');
 };
-
 onkeydown = () => {
   let code = event.keyCode;
     if( newGame.allStep['player'] !== undefined 

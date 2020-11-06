@@ -13,11 +13,10 @@
     font-size: 1.2rem;
     margin-bottom: 10px;
 }
-.control_level {
+#control_level {
     display: none;
 }
-.play {
-    visibility: hidden;
+#play {
 }
 #playing_field {
     border: 5px solid #000;
@@ -34,7 +33,6 @@
 }
 .playing_field_row {
     display: flex;
-    
 }
 .playing_field_row div {
     text-align: center;
@@ -42,7 +40,7 @@
     width: 50px;
     height: 50px;
     box-sizing: border-box;
-    transition: 1s;
+    transition: 1.5s;
 }
 .playing_field_row .selectDivPlayer {
     background-image: url('../img/player.png');
@@ -57,7 +55,6 @@
     background-position: center;
     background-repeat: no-repeat;
     opacity: .8;
-    
 }
 .playing_field_row .selectDivWall {
     background-image: url('../img/wall.jpg');
@@ -109,13 +106,11 @@
     background-size: 100%;
     background-repeat: no-repeat;
 }
-
 .playing_field_row .deadFromMonsterPlayer {
     background-image: url('../img/dead.png');
     background-size: 100%;
     background-repeat: no-repeat;
 }
-
 .playing_field_row .deadFromBombMonster {
     background-image: url('../img/pepel_monster.png');
     background-size: 100%;
@@ -126,7 +121,6 @@
     background-size: 100%;
     background-repeat: no-repeat;
 }
-
 .playing_field_row .addExplosion{
     background-image: url('../img/addExplosion.jpg');
     background-size: 100%;
