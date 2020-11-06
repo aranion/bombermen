@@ -16,17 +16,50 @@
 #control_level {
     display: none;
 }
+.control-game-pole {
+    width: 100%;
+    margin-top:10px;
+    margin-bottom:10px;
+    display:flex;
+    justify-content: space-evenly;
+}
+#nextLevel {
+    width: 100%;
+    margin: 0 auto;
+    font-size: 1.5rem;
+    height: 30px;
+    background: palegreen;
+    border: 1px solid yellowgreen;
+}
+
 #play {
+     /*    margin: 5px; */
+     margin-top 15px;
+        font-size: 1.5rem;
+        min-width: 100px;
+        height: 30px;
+        background: palegreen;
+        border: 1px solid yellowgreen;
+}
+.control-game-pole input[type=range] {
+    margin-right: 30px;
+    max-width: 30%;
+}
+#control_game {
+    font-size: 2rem;
+}
+.img-control-game {
+    width: 20px;
 }
 #playing_field {
-    border: 5px solid #000;
+    border: 3px solid #000;
     width: max-content;
     min-height: max-content;
     margin: 0 auto;
     box-sizing: border-box;
 }
 .playing_field_rows {
-    background-image: url('../img/fon.jpg');
+    background-image: url('../img/bombermen/fon.jpg');
     background-size: contain;
     display: flex;
     flex-direction: column;
@@ -43,32 +76,32 @@
     transition: 1.5s;
 }
 .playing_field_row .selectDivPlayer {
-    background-image: url('../img/player.png');
+    background-image: url('../img/bombermen/player.png');
     background-size: 100%;
     background-repeat: no-repeat;
     border: 2px solid #fff;
     border-radius: 30px;
 }
 .playing_field_row .selectDivMonster {
-    background-image: url('../img/monster.png');
+    background-image: url('../img/bombermen/monster.png');
     background-size: 100%;
     background-position: center;
     background-repeat: no-repeat;
     opacity: .8;
 }
 .playing_field_row .selectDivWall {
-    background-image: url('../img/wall.jpg');
+    background-image: url('../img/bombermen/wall.jpg');
     background-size: contain;
     border: 1px solid #000;
     box-sizing: border-box;
 }
 .playing_field_row .selectDivBox {
-    background-image: url('../img/box.jpg');
+    background-image: url('../img/bombermen/box.jpg');
     background-size: 100%;
     background-repeat: no-repeat;
 }
 .playing_field_row .selectDivBomb {
-    background-image: url('../img/bomb.png');
+    background-image: url('../img/bombermen/bomb.png');
     background-size: 100%;
     background-repeat: no-repeat;
 }
@@ -96,43 +129,43 @@
     }
 }
 .playing_field_row .explosionBomb {
-    background-image: url('../img/explosion.png');
+    background-image: url('../img/bombermen/explosion.png');
     background-size: 100%;
     background-repeat: no-repeat;
     animation: anime infinite 1.5s linear;
 }
 .playing_field_row .deadFromBombPlayer {
-    background-image: url('../img/pepel.png');
+    background-image: url('../img/bombermen/pepel.png');
     background-size: 100%;
     background-repeat: no-repeat;
 }
 .playing_field_row .deadFromMonsterPlayer {
-    background-image: url('../img/dead.png');
+    background-image: url('../img/bombermen/dead.png');
     background-size: 100%;
     background-repeat: no-repeat;
 }
 .playing_field_row .deadFromBombMonster {
-    background-image: url('../img/pepel_monster.png');
+    background-image: url('../img/bombermen/pepel_monster.png');
     background-size: 100%;
     background-repeat: no-repeat;
 }
 .playing_field_row .selectDivMonsterSpeed {
-    background-image: url('../img/bag.png');
+    background-image: url('../img/bombermen/bag.png');
     background-size: 100%;
     background-repeat: no-repeat;
 }
 .playing_field_row .addExplosion{
-    background-image: url('../img/addExplosion.jpg');
+    background-image: url('../img/bombermen/addExplosion.jpg');
     background-size: 100%;
     background-repeat: no-repeat;
 }
 .playing_field_row .addLifePlayer{
-    background-image: url('../img/life.jpg');
+    background-image: url('../img/bombermen/life.png');
     background-size: 100%;
     background-repeat: no-repeat;
 }
 .playing_field_row .selectDivBombX2{
-    background-image: url('../img/bombX2.png');
+    background-image: url('../img/bombermen/bombX2.png');
     background-size: 100%;
     background-repeat: no-repeat;
 }
